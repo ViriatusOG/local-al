@@ -5,7 +5,7 @@
 #   - 9070 XT:  -50mV undervolt, 265W power cap   (tune_rx9070xt.sh)
 #   - IRQ pinning for both GPUs                  (pin_gpu_irqs.sh)
 # Run as root on the server:
-#   sudo bash /home/hugo/projects/hugo/r9700-setup/apply-tuning.sh
+#   sudo bash /path/to/r9700-setup/apply-tuning.sh
 # Then reboot (required for the kernel flags that enable undervolting):
 #   sudo reboot
 set -euo pipefail

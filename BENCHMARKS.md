@@ -1,5 +1,5 @@
 # AMD Dual Navi 48 Tuning Benchmark Report
-**Host:** `al` (192.168.0.199) | **OS:** Ubuntu 24.04 LTS (Kernel 6.8+)  
+**Host:** `al` (192.168.*.*) | **OS:** Ubuntu 24.04 LTS (Kernel 6.8+)  
 **CPU:** AMD Ryzen 7 5800X (8c/16t) | **ROCm:** 7.x  
 **Model:** Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp (MTP speculative decoding draft acceptance ~72–73%)  
 **Benchmark Tool:** llama-taco / llama-server (`b11200`)  

@@ -1,4 +1,4 @@
-# AMD GPU tuning — setup notes for `al` (192.168.0.199)
+# AMD GPU tuning — setup notes for `al` (192.168.*.*)
 
 Hardware: 2× Navi 48 GPUs, Ryzen 7 5800X (8c/16t), Ubuntu 24.04, ROCm 7.2.4.
 - **card0** `09:00.0` = `0x1002:0x7551` = **Radeon AI PRO R9700** (32GB, 300W TBP)
@@ -39,7 +39,8 @@ completely banned from irqbalance.
 
 ## Install (run on the server, once, as root)
 ```bash
-sudo bash /home/hugo/projects/hugo/r9700-setup/apply-tuning.sh
+cd /path/to/r9700-setup
+sudo bash apply-tuning.sh
 ```
 Installs all scripts + services, backs up `/etc/default/grub`, adds the kernel flags
 (`iommu=pt processor.max_cstate=2 pcie_aspm=off amdgpu.ppfeaturemask=0xffffffff`),
