@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMD Dual Navi 48 Benchmark Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(23, 32, 54, 0.7);
+      --card-border: rgba(56, 189, 248, 0.15);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #ed1c24; /* AMD Red */
+      --cyan: #06b6d4;
+      --teal: #10b981;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --blue: #3b82f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(237, 28, 36, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .header-title h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title h1 span.badge-amd {
+      background: var(--accent);
+      color: white;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .header-title p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    /* Actions & File Load */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #c5161c;
+    }
+    #file-input { display: none; }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      padding: 18px 20px;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--cyan));
+    }
+    .kpi-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .kpi-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin: 6px 0 2px 0;
+      letter-spacing: -0.02em;
+    }
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Tabs & Filters */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .preset-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pill:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .pill.active {
+      background: var(--cyan);
+      color: #0b0f19;
+      border-color: var(--cyan);
+      font-weight: 700;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(540px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 380px;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chart-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .chart-header p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .chart-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 300px;
+    }
+
+    /* Comparator Section */
+    .comparator-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .comparator-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .comparator-select {
+      background: #131b2e;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      min-width: 280px;
+      outline: none;
+    }
+    .comparator-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .comparator-table th, .comparator-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .comparator-table th {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .delta-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+    .delta-pos { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+    .delta-neg { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+    .delta-neutral { background: rgba(255, 255, 255, 0.08); color: var(--text-muted); }
+
+    /* Data Table Section */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .search-box {
+      background: #131b2e;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      width: 220px;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    table.data-table th, table.data-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    table.data-table th {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      user-select: none;
+    }
+    table.data-table th:hover { color: var(--cyan); }
+    table.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .tag {
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .tag-gpu0 { background: rgba(237, 28, 36, 0.15); color: #f87171; border: 1px solid rgba(237, 28, 36, 0.3); }
+    .tag-gpu1 { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .tag-dual { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+    /* Dropzone message */
+    .dropzone-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.9);
+      border: 3px dashed var(--cyan);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .dragover .dropzone-overlay { display: flex; }
+  </style>
+</head>
+<body>
+
+  <div class="dropzone-overlay" id="drop-overlay">Drop benchmarks.json here to load</div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1>
+          Dual Navi 48 Benchmark Analytics
+          <span class="badge-amd">ROCm 7.x</span>
+        </h1>
+        <p>AMD Radeon AI PRO R9700 (32GB) + RX 9070 XT (16GB) | Ubuntu 24.04 (Kernel 6.8+)</p>
+      </div>
+      <div class="header-actions">
+        <label class="btn btn-primary" for="file-input">
+          📁 Load New benchmarks.json
+        </label>
+        <input type="file" id="file-input" accept=".json">
+        <button class="btn" id="btn-reload" title="Try loading from relative benchmarks.json">
+          🔄 Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Summary Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--card-accent: #f87171;">
+        <div class="kpi-label">Peak Gen Speed (Short)</div>
+        <div class="kpi-val" id="kpi-max-gen">--</div>
+        <div class="kpi-sub" id="kpi-max-gen-sub">--</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: #38bdf8;">
+        <div class="kpi-label">Peak Prompt Processing</div>
+        <div class="kpi-val" id="kpi-max-prompt">--</div>
+        <div class="kpi-sub" id="kpi-max-prompt-sub">--</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: #34d399;">
+        <div class="kpi-label">Lowest Peak Temp</div>
+        <div class="kpi-val" id="kpi-min-temp">--</div>
+        <div class="kpi-sub" id="kpi-min-temp-sub">--</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: #fbbf24;">
+        <div class="kpi-label">Peak Efficiency</div>
+        <div class="kpi-val" id="kpi-max-eff">--</div>
+        <div class="kpi-sub" id="kpi-max-eff-sub">--</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="preset-pills" id="preset-filters">
+        <button class="pill active" data-filter="all">All Presets (<span id="count-all">0</span>)</button>
+        <button class="pill" data-filter="gpu0-only">R9700 Only (<span id="count-gpu0">0</span>)</button>
+        <button class="pill" data-filter="gpu1-only">RX 9070 XT Only (<span id="count-gpu1">0</span>)</button>
+        <button class="pill" data-filter="dual-gpu-max">Dual GPU Split (<span id="count-dual">0</span>)</button>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        Showing <span id="visible-count" style="font-weight: 700; color: var(--text);">0</span> runs
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+      <!-- Chart 1: Speed vs Power -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Generation Speed vs. Power Draw</h3>
+            <p>Throughput (tok/s) paired against Average Power (Watts)</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-speed-power"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Thermals & Efficiency -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Thermal Impact & Efficiency</h3>
+            <p>Peak Temperature (°C) vs Tokens per Joule (tok/J)</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-temp-eff"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Prompt Processing -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Prompt Processing Performance</h3>
+            <p>Short Prompt vs Long Prompt (16,426 tokens) Throughput</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-prompt"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 4: Context Degradation / Long Gen -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Short vs. Long Context Generation</h3>
+            <p>Comparing short generation vs generation under 262k context</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-context"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side-by-Side Comparator Card -->
+    <div class="comparator-card">
+      <div class="chart-header" style="margin-bottom: 16px;">
+        <div>
+          <h3>Interactive Run Comparator</h3>
+          <p>Select any two runs to see the exact delta and efficiency gain</p>
+        </div>
+      </div>
+      <div class="comparator-controls">
+        <div>
+          <label style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">Baseline Run (A)</label>
+          <select class="comparator-select" id="comp-run-a"></select>
+        </div>
+        <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-muted); margin-top: 14px;">VS</div>
+        <div>
+          <label style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">Comparison Run (B)</label>
+          <select class="comparator-select" id="comp-run-b"></select>
+        </div>
+      </div>
+      <table class="comparator-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th id="comp-head-a">Run A</th>
+            <th id="comp-head-b">Run B</th>
+            <th>Difference</th>
+            <th>% Change</th>
+          </tr>
+        </thead>
+        <tbody id="comparator-body">
+          <!-- Rendered via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Raw Data Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <div>
+          <h3 style="font-size: 1rem; font-weight: 700;">Complete Benchmark Log</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Click any column header to sort</p>
+        </div>
+        <input type="text" class="search-box" id="table-search" placeholder="Search runs, models, IDs...">
+      </div>
+      <table class="data-table" id="runs-table">
+        <thead>
+          <tr>
+            <th data-col="id">Run ID</th>
+            <th data-col="time">Date & Time</th>
+            <th data-col="preset">Preset</th>
+            <th data-col="model">Model</th>
+            <th data-col="gen_short">Gen (Short)</th>
+            <th data-col="gen_long">Gen (Long)</th>
+            <th data-col="prompt_short">Prompt (Short)</th>
+            <th data-col="prompt_long">Prompt (Long)</th>
+            <th data-col="power">Avg Power</th>
+            <th data-col="temp">Peak Temp</th>
+            <th data-col="eff">Tok / Joule</th>
+            <th data-col="ttft">TTFT</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rendered via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Embedded Initial Benchmark Data -->
+  <script id="initial-data" type="application/json">
+[
+  {
+    "id": "9858359f6ff7",
+    "created_at": 1790424857.8499649,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "Primary GPU 0 Only (Stock 300W)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 62.7, "prompt_tps_short": 536.3, "ttft_ms": 664.0,
+      "gen_tps_long": 56.1, "prompt_tps_long": 700.4, "avg_power_w": 289.9,
+      "tokens_per_joule": 0.216, "peak_temp_c": 91.0
+    }
+  },
+  {
+    "id": "335bae8ffeb3",
+    "created_at": 1790424999.1630356,
+    "model": "Qwen3.8-27B-UD-Q8_K_XL.gguf",
+    "preset_id": "dual-gpu-max",
+    "preset_name": "Dual AMD GPUs (Max VRAM)",
+    "metrics": {
+      "load_s": 18.3, "ctx": 128000, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 40.6, "prompt_tps_short": 779.2, "ttft_ms": 457.0,
+      "gen_tps_long": 34.4, "prompt_tps_long": 1434.5, "avg_power_w": 344.8,
+      "tokens_per_joule": 0.118, "peak_temp_c": 89.0
+    }
+  },
+  {
+    "id": "05b87872b2a8",
+    "created_at": 1790425132.5471756,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "Secondary GPU 1 Only (Stock 304W)",
+    "metrics": {
+      "load_s": 7.3, "ctx": 48128, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 61.8, "prompt_tps_short": 533.0, "ttft_ms": 668.0,
+      "gen_tps_long": 49.7, "prompt_tps_long": 702.5, "avg_power_w": 293.1,
+      "tokens_per_joule": 0.211, "peak_temp_c": 84.0
+    }
+  },
+  {
+    "id": "84e7a5074182",
+    "created_at": 1790425344.9472475,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "dual-gpu-max",
+    "preset_name": "Dual AMD GPUs (Max VRAM)",
+    "metrics": {
+      "load_s": 3.4, "ctx": 128000, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 60.9, "prompt_tps_short": 539.9, "ttft_ms": 659.0,
+      "gen_tps_long": 54.8, "prompt_tps_long": 811.4, "avg_power_w": 370.6,
+      "tokens_per_joule": 0.164, "peak_temp_c": 87.0
+    }
+  },
+  {
+    "id": "ac9d0273f434",
+    "created_at": 1790435710.9329464,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "R9700 (265W / -85mV Run 1)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 63.0, "prompt_tps_short": 545.1, "ttft_ms": 653.0,
+      "gen_tps_long": 53.1, "prompt_tps_long": 707.8, "avg_power_w": 252.5,
+      "tokens_per_joule": 0.249, "peak_temp_c": 82.0
+    }
+  },
+  {
+    "id": "0e3f3daeb9eb",
+    "created_at": 1790436293.209831,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "R9700 (265W / -85mV Run 2)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 62.3, "prompt_tps_short": 545.1, "ttft_ms": 653.0,
+      "gen_tps_long": 52.7, "prompt_tps_long": 703.5, "avg_power_w": 256.9,
+      "tokens_per_joule": 0.243, "peak_temp_c": 90.0
+    }
+  },
+  {
+    "id": "6d54a0b950ac",
+    "created_at": 1790436658.7739174,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "RX 9070 XT (250W / -50mV)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 48128, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 57.9, "prompt_tps_short": 492.3, "ttft_ms": 723.0,
+      "gen_tps_long": 46.5, "prompt_tps_long": 640.8, "avg_power_w": 238.8,
+      "tokens_per_joule": 0.242, "peak_temp_c": 78.0
+    }
+  },
+  {
+    "id": "55754e021816",
+    "created_at": 1790441316.4256387,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "RX 9070 XT (280W / -50mV)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 48128, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 59.7, "prompt_tps_short": 499.3, "ttft_ms": 713.0,
+      "gen_tps_long": 47.8, "prompt_tps_long": 652.9, "avg_power_w": 257.7,
+      "tokens_per_joule": 0.232, "peak_temp_c": 78.0
+    }
+  },
+  {
+    "id": "30c2664027fd",
+    "created_at": 1790441753.9155633,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "RX 9070 XT (280W / -65mV)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 48128, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 59.7, "prompt_tps_short": 498.4, "ttft_ms": 714.0,
+      "gen_tps_long": 48.2, "prompt_tps_long": 655.7, "avg_power_w": 261.6,
+      "tokens_per_joule": 0.228, "peak_temp_c": 78.0
+    }
+  },
+  {
+    "id": "256da9519795",
+    "created_at": 1790442346.768481,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "R9700 (280W / -85mV)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 63.2, "prompt_tps_short": 544.3, "ttft_ms": 654.0,
+      "gen_tps_long": 53.3, "prompt_tps_long": 710.3, "avg_power_w": 271.3,
+      "tokens_per_joule": 0.233, "peak_temp_c": 92.0
+    }
+  },
+  {
+    "id": "4df01d5a5886",
+    "created_at": 1790443081.9553356,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "R9700 (280W / -50mV)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 63.1, "prompt_tps_short": 544.3, "ttft_ms": 654.0,
+      "gen_tps_long": 56.2, "prompt_tps_long": 710.6, "avg_power_w": 268.1,
+      "tokens_per_joule": 0.235, "peak_temp_c": 88.0
+    }
+  },
+  {
+    "id": "6335b371337c",
+    "created_at": 1790443737.076697,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu0-only",
+    "preset_name": "R9700 (265W / -50mV Final)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 262144, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 62.1, "prompt_tps_short": 541.7, "ttft_ms": 657.0,
+      "gen_tps_long": 55.6, "prompt_tps_long": 704.5, "avg_power_w": 254.7,
+      "tokens_per_joule": 0.244, "peak_temp_c": 84.0
+    }
+  },
+  {
+    "id": "f2a9519512a7",
+    "created_at": 1790444238.1971622,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "RX 9070 XT (265W / -50mV Symmetric)",
+    "metrics": {
+      "load_s": 3.5, "ctx": 48128, "layers_on_gpu": 66, "total_layers": 66,
+      "gen_tps_short": 58.8, "prompt_tps_short": 489.2, "ttft_ms": 728.0,
+      "gen_tps_long": 47.1, "prompt_tps_long": 648.0, "avg_power_w": 252.6,
+      "tokens_per_joule": 0.233, "peak_temp_c": 78.0
+    }
+  }
+]
+  </script>
+
+  <script>
+    // App State
+    let allRuns = [];
+    let currentFilter = "all";
+    let charts = {};
+    let sortCol = "time";
+    let sortAsc = false;
+
+    // Format Helpers
+    function formatDate(epoch) {
+      if (!epoch) return "--";
+      // Handle seconds vs ms
+      const d = new Date(epoch > 1e11 ? epoch : epoch * 1000);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    function getPresetBadge(preset_id) {
+      if (preset_id === 'gpu0-only') return '<span class="tag tag-gpu0">R9700</span>';
+      if (preset_id === 'gpu1-only') return '<span class="tag tag-gpu1">RX 9070 XT</span>';
+      return '<span class="tag tag-dual">Dual GPU</span>';
+    }
+
+    function init() {
+      // 1. Load initial data
+      try {
+        const raw = document.getElementById("initial-data").textContent;
+        allRuns = JSON.parse(raw);
+      } catch (e) {
+        console.error("Failed to parse embedded initial data", e);
+      }
+
+      setupEventListeners();
+      renderApp();
+    }
+
+    function setupEventListeners() {
+      // File selector
+      document.getElementById('file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) loadJsonFile(file);
+      });
+
+      // Reload attempt via fetch
+      document.getElementById('btn-reload').addEventListener('click', () => {
+        fetch('benchmarks.json?t=' + Date.now())
+          .then(res => {
+            if (!res.ok) throw new Error("Status " + res.status);
+            return res.json();
+          })
+          .then(data => {
+            allRuns = data;
+            renderApp();
+            alert("Successfully reloaded benchmarks.json!");
+          })
+          .catch(err => {
+            alert("Could not automatically fetch benchmarks.json (likely file:// security restriction). Please use 'Load New benchmarks.json' button to select it!");
+          });
+      });
+
+      // Drag and Drop
+      window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        document.body.classList.add('dragover');
+      });
+      window.addEventListener('dragleave', (e) => {
+        if (e.clientX <= 0 || e.clientY <= 0) {
+          document.body.classList.remove('dragover');
+        }
+      });
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        document.body.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+          loadJsonFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Filter pills
+      document.querySelectorAll('#preset-filters .pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#preset-filters .pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          renderApp();
+        });
+      });
+
+      // Search box
+      document.getElementById('table-search').addEventListener('input', () => {
+        renderTable();
+      });
+
+      // Comparator Selects
+      document.getElementById('comp-run-a').addEventListener('change', renderComparator);
+      document.getElementById('comp-run-b').addEventListener('change', renderComparator);
+
+      // Sorting
+      document.querySelectorAll('table.data-table th').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.col;
+          if (sortCol === col) {
+            sortAsc = !sortAsc;
+          } else {
+            sortCol = col;
+            sortAsc = true;
+          }
+          renderTable();
+        });
+      });
+    }
+
+    function loadJsonFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed)) {
+            allRuns = parsed;
+            renderApp();
+            alert(`Loaded ${allRuns.length} benchmark runs from ${file.name}`);
+          } else {
+            alert("File is not a valid JSON array of benchmark runs.");
+          }
+        } catch (err) {
+          alert("Error parsing JSON file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function getFilteredRuns() {
+      if (currentFilter === 'all') return allRuns;
+      return allRuns.filter(r => r.preset_id === currentFilter);
+    }
+
+    function renderApp() {
+      updateCounts();
+      renderKPIs();
+      renderCharts();
+      populateComparatorOptions();
+      renderComparator();
+      renderTable();
+    }
+
+    function updateCounts() {
+      document.getElementById('count-all').textContent = allRuns.length;
+      document.getElementById('count-gpu0').textContent = allRuns.filter(r => r.preset_id === 'gpu0-only').length;
+      document.getElementById('count-gpu1').textContent = allRuns.filter(r => r.preset_id === 'gpu1-only').length;
+      document.getElementById('count-dual').textContent = allRuns.filter(r => r.preset_id === 'dual-gpu-max').length;
+      document.getElementById('visible-count').textContent = getFilteredRuns().length;
+    }
+
+    function renderKPIs() {
+      const runs = getFilteredRuns();
+      if (!runs.length) return;
+
+      // Max Gen
+      let maxGen = 0, maxGenRun = null;
+      let maxPrompt = 0, maxPromptRun = null;
+      let minTemp = 999, minTempRun = null;
+      let maxEff = 0, maxEffRun = null;
+
+      runs.forEach(r => {
+        const m = r.metrics || {};
+        if (m.gen_tps_short > maxGen) { maxGen = m.gen_tps_short; maxGenRun = r; }
+        if (m.prompt_tps_long > maxPrompt) { maxPrompt = m.prompt_tps_long; maxPromptRun = r; }
+        if (m.peak_temp_c && m.peak_temp_c < minTemp) { minTemp = m.peak_temp_c; minTempRun = r; }
+        if (m.tokens_per_joule > maxEff) { maxEff = m.tokens_per_joule; maxEffRun = r; }
+      });
+
+      document.getElementById('kpi-max-gen').textContent = maxGen ? `${maxGen} tps` : '--';
+      document.getElementById('kpi-max-gen-sub').textContent = maxGenRun ? `${maxGenRun.preset_name || maxGenRun.preset_id} (${maxGenRun.id})` : '--';
+
+      document.getElementById('kpi-max-prompt').textContent = maxPrompt ? `${maxPrompt} tps` : '--';
+      document.getElementById('kpi-max-prompt-sub').textContent = maxPromptRun ? `Long Prompt (${maxPromptRun.id})` : '--';
+
+      document.getElementById('kpi-min-temp').textContent = minTemp < 999 ? `${minTemp} °C` : '--';
+      document.getElementById('kpi-min-temp-sub').textContent = minTempRun ? `${minTempRun.preset_name || minTempRun.preset_id}` : '--';
+
+      document.getElementById('kpi-max-eff').textContent = maxEff ? `${maxEff} tok/J` : '--';
+      document.getElementById('kpi-max-eff-sub').textContent = maxEffRun ? `+${Math.round((maxEff - 0.216)/0.216 * 100)}% over stock` : '--';
+    }
+
+    function renderCharts() {
+      const runs = [...getFilteredRuns()].reverse(); // Chronological for charts
+      const labels = runs.map((r, i) => {
+        const shortName = (r.preset_name || r.preset_id).replace("Primary GPU 0 Only", "R9700").replace("Secondary GPU 1 Only", "9070 XT").replace("Dual AMD GPUs (Max VRAM)", "Dual");
+        return `#${i+1} ${r.id.substring(0, 6)} (${shortName})`;
+      });
+
+      const genShort = runs.map(r => r.metrics?.gen_tps_short || 0);
+      const genLong = runs.map(r => r.metrics?.gen_tps_long || 0);
+      const promptShort = runs.map(r => r.metrics?.prompt_tps_short || 0);
+      const promptLong = runs.map(r => r.metrics?.prompt_tps_long || 0);
+      const power = runs.map(r => r.metrics?.avg_power_w || 0);
+      const temp = runs.map(r => r.metrics?.peak_temp_c || 0);
+      const eff = runs.map(r => r.metrics?.tokens_per_joule || 0);
+
+      const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 11, weight: '600' } } },
+          tooltip: { padding: 10, cornerRadius: 8, backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1 }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 30 } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+        }
+      };
+
+      // Chart 1: Speed vs Power
+      if (charts.speedPower) charts.speedPower.destroy();
+      charts.speedPower = new Chart(document.getElementById('chart-speed-power'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Gen Speed (tok/s)',
+              data: genShort,
+              backgroundColor: 'rgba(6, 182, 212, 0.75)',
+              borderRadius: 6,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Avg Power (Watts)',
+              data: power,
+              type: 'line',
+              borderColor: '#f43f5e',
+              backgroundColor: '#f43f5e',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'Tokens / Sec', color: '#06b6d4' } },
+            y1: {
+              position: 'right',
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#f43f5e' },
+              title: { display: true, text: 'Power (Watts)', color: '#f43f5e' }
+            }
+          }
+        }
+      });
+
+      // Chart 2: Temp & Efficiency
+      if (charts.tempEff) charts.tempEff.destroy();
+      charts.tempEff = new Chart(document.getElementById('chart-temp-eff'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Peak Temp (°C)',
+              data: temp,
+              backgroundColor: 'rgba(245, 158, 11, 0.75)',
+              borderRadius: 6,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Tokens / Joule',
+              data: eff,
+              type: 'line',
+              borderColor: '#10b981',
+              backgroundColor: '#10b981',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            y: { ...chartDefaults.scales.y, min: 60, title: { display: true, text: 'Temperature (°C)', color: '#f59e0b' } },
+            y1: {
+              position: 'right',
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#10b981' },
+              title: { display: true, text: 'Tokens / Joule', color: '#10b981' }
+            }
+          }
+        }
+      });
+
+      // Chart 3: Prompt Processing
+      if (charts.prompt) charts.prompt.destroy();
+      charts.prompt = new Chart(document.getElementById('chart-prompt'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Prompt Short (tok/s)',
+              data: promptShort,
+              backgroundColor: 'rgba(139, 92, 246, 0.75)',
+              borderRadius: 6
+            },
+            {
+              label: 'Prompt Long (tok/s)',
+              data: promptLong,
+              backgroundColor: 'rgba(59, 130, 246, 0.75)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: chartDefaults
+      });
+
+      // Chart 4: Context Degradation
+      if (charts.context) charts.context.destroy();
+      charts.context = new Chart(document.getElementById('chart-context'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Gen Short (tok/s)',
+              data: genShort,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4
+            },
+            {
+              label: 'Gen Long Prompt (tok/s)',
+              data: genLong,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4
+            }
+          ]
+        },
+        options: chartDefaults
+      });
+    }
+
+    function populateComparatorOptions() {
+      const selectA = document.getElementById('comp-run-a');
+      const selectB = document.getElementById('comp-run-b');
+      const curA = selectA.value;
+      const curB = selectB.value;
+
+      selectA.innerHTML = '';
+      selectB.innerHTML = '';
+
+      allRuns.forEach((r, idx) => {
+        const label = `${r.id.substring(0, 6)} - ${r.preset_name || r.preset_id} (${r.metrics?.gen_tps_short} tps @ ${r.metrics?.avg_power_w}W)`;
+        const optA = new Option(label, r.id);
+        const optB = new Option(label, r.id);
+        selectA.add(optA);
+        selectB.add(optB);
+      });
+
+      // Set sensible defaults if available (e.g. stock baseline vs latest run)
+      if (allRuns.length >= 2) {
+        selectA.value = curA || allRuns[0].id;
+        selectB.value = curB || allRuns[allRuns.length - 1].id;
+      }
+    }
+
+    function renderComparator() {
+      const idA = document.getElementById('comp-run-a').value;
+      const idB = document.getElementById('comp-run-b').value;
+      const runA = allRuns.find(r => r.id === idA);
+      const runB = allRuns.find(r => r.id === idB);
+      if (!runA || !runB) return;
+
+      document.getElementById('comp-head-a').textContent = `${runA.preset_name || runA.preset_id} (${runA.id.substring(0,6)})`;
+      document.getElementById('comp-head-b').textContent = `${runB.preset_name || runB.preset_id} (${runB.id.substring(0,6)})`;
+
+      const mA = runA.metrics || {};
+      const mB = runB.metrics || {};
+
+      const metricsList = [
+        { key: 'gen_tps_short', label: 'Gen Speed (Short)', unit: ' tok/s', higherBetter: true },
+        { key: 'gen_tps_long', label: 'Gen Speed (Long Prompt)', unit: ' tok/s', higherBetter: true },
+        { key: 'prompt_tps_short', label: 'Prompt Speed (Short)', unit: ' tok/s', higherBetter: true },
+        { key: 'prompt_tps_long', label: 'Prompt Speed (Long)', unit: ' tok/s', higherBetter: true },
+        { key: 'avg_power_w', label: 'Average Power', unit: ' W', higherBetter: false },
+        { key: 'peak_temp_c', label: 'Peak Temperature', unit: ' °C', higherBetter: false },
+        { key: 'tokens_per_joule', label: 'Efficiency (Tokens / Joule)', unit: '', higherBetter: true },
+        { key: 'ttft_ms', label: 'Time to First Token (TTFT)', unit: ' ms', higherBetter: false },
+        { key: 'load_s', label: 'Model Load Time', unit: ' s', higherBetter: false }
+      ];
+
+      const tbody = document.getElementById('comparator-body');
+      tbody.innerHTML = '';
+
+      metricsList.forEach(m => {
+        const valA = mA[m.key];
+        const valB = mB[m.key];
+        if (valA === undefined && valB === undefined) return;
+
+        const diff = (valB !== undefined && valA !== undefined) ? (valB - valA) : null;
+        let pct = (diff !== null && valA !== 0) ? (diff / valA * 100) : null;
+
+        let deltaHtml = '--';
+        let pctHtml = '--';
+
+        if (diff !== null) {
+          const isGood = m.higherBetter ? diff > 0 : diff < 0;
+          const isNeutral = Math.abs(diff) < 0.001;
+          const badgeClass = isNeutral ? 'delta-neutral' : (isGood ? 'delta-pos' : 'delta-neg');
+          const sign = diff > 0 ? '+' : '';
+          deltaHtml = `<span class="delta-badge ${badgeClass}">${sign}${diff.toFixed(2)}${m.unit}</span>`;
+          pctHtml = `<span class="delta-badge ${badgeClass}">${sign}${pct.toFixed(1)}%</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${m.label}</strong></td>
+          <td>${valA !== undefined ? valA + m.unit : '--'}</td>
+          <td>${valB !== undefined ? valB + m.unit : '--'}</td>
+          <td>${deltaHtml}</td>
+          <td>${pctHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderTable() {
+      const q = document.getElementById('table-search').value.toLowerCase();
+      let runs = getFilteredRuns().filter(r => {
+        if (!q) return true;
+        const text = `${r.id} ${r.preset_name || ''} ${r.preset_id || ''} ${r.model || ''}`.toLowerCase();
+        return text.includes(q);
+      });
+
+      // Sorting
+      runs.sort((a, b) => {
+        let valA, valB;
+        if (sortCol === 'time') { valA = a.created_at || 0; valB = b.created_at || 0; }
+        else if (sortCol === 'id') { valA = a.id; valB = b.id; }
+        else if (sortCol === 'preset') { valA = a.preset_id; valB = b.preset_id; }
+        else if (sortCol === 'model') { valA = a.model; valB = b.model; }
+        else {
+          valA = a.metrics?.[sortCol] || 0;
+          valB = b.metrics?.[sortCol] || 0;
+        }
+        if (valA < valB) return sortAsc ? -1 : 1;
+        if (valA > valB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      runs.forEach(r => {
+        const m = r.metrics || {};
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${r.id}</code></td>
+          <td>${formatDate(r.created_at)}</td>
+          <td>${getPresetBadge(r.preset_id)} ${r.preset_name || ''}</td>
+          <td title="${r.model || ''}" style="max-width: 140px; overflow: hidden; text-overflow: ellipsis;">${r.model ? r.model.replace('.gguf', '') : '--'}</td>
+          <td><strong style="color: #38bdf8;">${m.gen_tps_short ?? '--'}</strong></td>
+          <td>${m.gen_tps_long ?? '--'}</td>
+          <td>${m.prompt_tps_short ?? '--'}</td>
+          <td>${m.prompt_tps_long ?? '--'}</td>
+          <td><strong>${m.avg_power_w ?? '--'} W</strong></td>
+          <td><span style="color: ${m.peak_temp_c >= 90 ? '#f87171' : '#34d399'}; font-weight: 700;">${m.peak_temp_c ?? '--'} °C</span></td>
+          <td>${m.tokens_per_joule ?? '--'}</td>
+          <td>${m.ttft_ms ? m.ttft_ms + ' ms' : '--'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Start
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
