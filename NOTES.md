@@ -9,8 +9,8 @@ Repo: https://github.com/stew675/r9700-setup (adapted — see below).
 ## Tuning profiles
 | Card | Undervolt | Power cap | Script / service |
 |---|---|---|---|
-| R9700 | −85 mV (repo values) | 265 W | `tune_r9700.sh` / `amd-gpu-tune.service` |
-| RX 9070 XT | −65 mV | 280 W | `tune_rx9070xt.sh` / `amd-rx9070xt-tune.service` |
+| R9700 | −50 mV | 265 W | `tune_r9700.sh` / `amd-gpu-tune.service` |
+| RX 9070 XT | −50 mV | 265 W | `tune_rx9070xt.sh` / `amd-rx9070xt-tune.service` |
 
 IRQ pinning (`pin_gpu_irqs.sh` / `gpu-irq-pin.service`) applies to **both** cards:
 each GPU's IRQ → a dedicated physical core (currently IRQ 109 → CPU 7, IRQ 110 → CPU 6;
@@ -51,16 +51,18 @@ Model: Qwen3.8-27B IQ3_S + MTP (same on both cards). Full data in
 `~/llama-taco/benchmarks.json`.
 
 **R9700 (gpu0-only preset, 262k ctx)**
-| | Stock (300W) | Tuned (265W, −85mV) |
-|---|---|---|
-| Gen tps short / long | 62.7 / 56.1 | 62.3–63.0 / 52.7–53.1 |
-| Prompt tps short | 536.3 | 545.1 |
-| Avg power | 289.9 W | 252.5–256.9 W (−11…−13%) |
-| Peak temp | 91 °C | 82–90 °C |
-| Tokens/Joule | 0.216 | 0.243–0.249 (+12…+15%) |
+| | Stock (300W) | 265W/−85mV | 280W/−85mV | 280W/−50mV | 265W/−50mV (final) |
+|---|---|---|---|---|---|
+| Gen tps short | 62.7 | 62.3–63.0 | 63.2 | 63.1 | 62.1 |
+| Gen tps long | 56.1 | 52.7–53.1 | 53.3 | 56.2 | 55.6 |
+| Prompt tps short | 536.3 | 545.1 | 544.3 | 544.3 | 541.7 |
+| Avg power | 289.9 W | 252.5–256.9 W | 271.3 W | 268.1 W | 254.7 W (−12%) |
+| Peak temp | 91 °C | 82–90 °C | 92 °C | 88 °C | 84 °C (−7°C) |
+| Tokens/Joule | 0.216 | 0.243–0.249 | 0.233 | 0.235 | 0.244 (+13%) |
 
-Short-context work is flat; long-context gen is ~5% lower (cap under sustained
-262k-ctx load). Efficiency and power are the win.
+Findings: the repo's −85mV cost ~5% on long-context gen (not the cap — 265→280W
+changed nothing; it was the UV). −50mV at 265W gives full stock speed with −12%
+power and −7°C.
 
 **RX 9070 XT (gpu1-only preset)**
 | | Stock (304W) | 250W/−50mV | 280W/−50mV | 280W/−65mV (final) |

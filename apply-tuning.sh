@@ -1,8 +1,8 @@
 #!/bin/bash
 # One-shot installer for the AMD GPU tuning setup (Ubuntu).
 # Tuning profiles:
-#   - R9700:    -85mV undervolt, 265W power cap   (tune_r9700.sh)
-#   - 9070 XT:  -50mV undervolt, 280W power cap   (tune_rx9070xt.sh)
+#   - R9700:    -50mV undervolt, 265W power cap   (tune_r9700.sh)
+#   - 9070 XT:  -50mV undervolt, 265W power cap   (tune_rx9070xt.sh)
 #   - IRQ pinning for both GPUs                  (pin_gpu_irqs.sh)
 # Run as root on the server:
 #   sudo bash /home/hugo/projects/hugo/r9700-setup/apply-tuning.sh

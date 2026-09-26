@@ -10,7 +10,10 @@ POWER_LIMIT_HW=$(($POWER_LIMIT_WATT * 1000000))
 # Auto-discover R9700 GPUs ONLY.
 # PCI ID 0x1002:0x7551 = Radeon AI PRO R9700 (upstream pci.ids).
 # NOTE: 0x1002:0x7550 = RX 9070/9070 XT (Navi 48) -- deliberately excluded,
-# because the -85mV / 265W values below are calibrated for the R9700.
+# because these values are calibrated for the R9700.
+# Benchmarked 2026-09-26: 265W/−50mV = full stock speed (55.6 tps gen long,
+# stock 56.1) at −12% power (254.7W) and −7°C. The repo's −85mV cost ~5% on
+# long-context gen; −50mV has no measurable cost.
 PCI_IDS=()
 for DEV in /sys/bus/pci/devices/0000:*; do
     if [ -r "$DEV/device" ]; then

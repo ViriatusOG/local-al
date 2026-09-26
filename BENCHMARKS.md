@@ -64,22 +64,22 @@ graph LR
 
 ### Comprehensive Test Progression
 
-| Metric | Test 1: Stock (Baseline) | Test 2: 250W / −50mV | Test 3: 280W / −50mV | Test 4: 280W / −65mV (Final) | Net vs. Stock |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gen Speed (short)** | **61.8 tok/s** | 57.9 tok/s | 59.7 tok/s | **59.7 tok/s** | −2.1 tok/s (−3.4%) |
-| **Gen Speed (long prompt)**| **49.7 tok/s** | 46.5 tok/s | 47.8 tok/s | **48.2 tok/s** | −1.5 tok/s (−3.0%) |
-| **Prompt Processing (short)**| **533.0 tok/s** | 492.3 tok/s | 499.3 tok/s | **498.4 tok/s** | −34.6 tok/s (−6.5%) |
-| **Prompt Processing (long)** | **703.0 tok/s** | 641.0 tok/s | 653.0 tok/s | **656.0 tok/s** | −47.0 tok/s (−6.7%) |
-| **Average Power (short)** | 293.1 W | **238.8 W** | 257.7 W | **261.6 W** | **−31.5 W (−10.7%)** |
-| **Peak Temperature** | 84 °C | **78 °C** | **78 °C** | **78 °C** | **−6 °C Much Cooler** |
-| **Efficiency (Tokens / Joule)**| 0.211 | **0.242** | 0.232 | **0.228** | **+8.1% Efficiency** |
-| **Time to First Token (TTFT)** | 0.67 s | 0.72 s | 0.71 s | **0.71 s** | Unchanged |
-| **Load Time** | 7.3 s | **3.5 s** | **3.5 s** | **3.5 s** | 2x faster initialization |
+| Metric | Test 1: Stock (Baseline) | Test 2: 250W / −50mV | Test 3: 265W / −50mV (Symmetric) | Test 4: 280W / −50mV | Test 5: 280W / −65mV | Net vs. Stock (265W) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gen Speed (short)** | **61.8 tok/s** | 57.9 tok/s | **58.8 tok/s** | 59.7 tok/s | 59.7 tok/s | −3.0 tok/s (−4.8%) |
+| **Gen Speed (long prompt)**| **49.7 tok/s** | 46.5 tok/s | **47.1 tok/s** | 47.8 tok/s | 48.2 tok/s | −2.6 tok/s (−5.2%) |
+| **Prompt Processing (short)**| **533.0 tok/s** | 492.3 tok/s | **489.2 tok/s** | 499.3 tok/s | 498.4 tok/s | −43.8 tok/s (−8.2%) |
+| **Prompt Processing (long)** | **703.0 tok/s** | 641.0 tok/s | **648.0 tok/s** | 653.0 tok/s | 656.0 tok/s | −55.0 tok/s (−7.8%) |
+| **Average Power (short)** | 293.1 W | **238.8 W** | **252.6 W** | 257.7 W | 261.6 W | **−40.5 W (−13.8%)** |
+| **Peak Temperature** | 84 °C | **78 °C** | **78 °C** | **78 °C** | **78 °C** | **−6 °C Much Cooler** |
+| **Efficiency (Tokens / Joule)**| 0.211 | **0.242** | **0.233** | 0.232 | 0.228 | **+10.4% Efficiency** |
+| **Time to First Token (TTFT)** | 0.67 s | 0.72 s | 0.73 s | 0.71 s | 0.71 s | ~Same |
+| **Load Time** | 7.3 s | **3.5 s** | **3.5 s** | **3.5 s** | **3.5 s** | 2x faster |
 
 ### Key Engineering Insights (RX 9070 XT)
-1. **250W Cap Was Too Strict:** Dropping from 304W to 250W (17% cut) caused clock throttling (−6.3% TPS).
-2. **280W Sweet Spot:** Raising the limit to 280W recovered nearly all throughput (59.7 tps) while maintaining a dramatic **6 °C thermal drop (78 °C peak)** and saving **>31 W** of power.
-3. **Undervolt Scaling:** Testing `−65mV` vs `−50mV` at 280W proved that the 9070 XT is power-capped rather than voltage-starved, providing extra voltage stability margin without altering speed.
+1. **Power Scaling is Cleanly Linear:** 250W (57.9 tps @ 238W) -> 265W (58.8 tps @ 252W) -> 280W (59.7 tps @ 257W) -> 304W (61.8 tps @ 293W).
+2. **265W Symmetric Sweet Spot:** Matching the R9700's 265W power limit saves a huge **40.5 W of power (−14%)** while staying rock-solid at **78 °C (−6 °C)** and delivering **58.8 tok/s**.
+3. **280W vs 265W Trade-off:** 280W recovers an extra ~0.9 tok/s (59.7 vs 58.8 tps) for an extra 5–9W of power draw. Both run at identical 78 °C temps.
 
 ---
 

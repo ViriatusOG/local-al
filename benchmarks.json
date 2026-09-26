@@ -456,5 +456,40 @@
       "cpu_percent": 187.0,
       "peak_temp_c": 84.0
     }
+  },
+  {
+    "id": "f2a9519512a7",
+    "created_at": 1790444238.1971622,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "gpu1-only",
+    "preset_name": "Secondary GPU 1 Only",
+    "mmproj": "mmproj-Qwen3.8-27B-BF16.gguf",
+    "parallel": 1,
+    "mtp": true,
+    "variant": null,
+    "variant_key": null,
+    "variant_label": null,
+    "settings_key": "[\"Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf\", \"mmproj-Qwen3.8-27B-BF16.gguf\", 1, true, \"gpu1\", 48000, 99, 4, true, \"none\", \"\", \"q4_0\", \"q4_0\", \"\"]",
+    "llama_build": 11200,
+    "metrics": {
+      "load_s": 3.5,
+      "ctx": 48128,
+      "layers_on_gpu": 66,
+      "total_layers": 66,
+      "gen_tps_short": 58.8,
+      "prompt_tps_short": 489.2,
+      "ttft_ms": 728.0,
+      "gen_tps_long": 47.1,
+      "prompt_tps_long": 648.0,
+      "long_prompt_tokens": 16426,
+      "draft_acceptance": 0.725,
+      "peak_vram_gb": {
+        "1": 14.96
+      },
+      "avg_power_w": 252.6,
+      "tokens_per_joule": 0.233,
+      "cpu_percent": 188.0,
+      "peak_temp_c": 78.0
+    }
   }
 ]
