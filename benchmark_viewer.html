@@ -337,11 +337,148 @@
       color: var(--cyan);
     }
     .dragover .dropzone-overlay { display: flex; }
+
+    /* Custom Themed Modal Dialog */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(6, 182, 212, 0.15);
+      overflow: hidden;
+      transform: scale(0.95);
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modalPop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-header {
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .modal-icon.icon-info { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .modal-icon.icon-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .modal-icon.icon-error { background: rgba(237, 28, 36, 0.15); color: #f87171; border: 1px solid rgba(237, 28, 36, 0.3); }
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .modal-body {
+      padding: 20px 22px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+    .modal-body code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+      font-size: 0.85rem;
+    }
+    .modal-footer {
+      padding: 14px 22px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: flex-end;
+    }
+    .modal-btn {
+      background: var(--cyan);
+      color: #0b0f19;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-btn:hover {
+      background: #38bdf8;
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+    }
+
+    /* Floating Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1050;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: var(--text);
+      font-size: 0.86rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      min-width: 280px;
+      max-width: 420px;
+    }
+    @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
 </head>
 <body>
 
   <div class="dropzone-overlay" id="drop-overlay">Drop benchmarks.json here to load</div>
+
+  <!-- Themed Modal Dialog -->
+  <div class="modal-overlay" id="app-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon icon-info" id="modal-icon">ℹ</div>
+        <div class="modal-title" id="modal-title">Notification</div>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="modal-btn" id="modal-close-btn">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Themed Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
 
   <div class="container">
     <!-- Header -->
@@ -707,6 +844,54 @@
     let sortCol = "time";
     let sortAsc = false;
 
+
+    // Custom Themed Modal & Toast System
+    function showModal(title, message, type = 'info') {
+      const modal = document.getElementById('app-modal');
+      const icon = document.getElementById('modal-icon');
+      const titleEl = document.getElementById('modal-title');
+      const bodyEl = document.getElementById('modal-body');
+
+      titleEl.textContent = title;
+      bodyEl.innerHTML = message;
+
+      icon.className = 'modal-icon icon-' + type;
+      if (type === 'success') icon.textContent = '✓';
+      else if (type === 'error') icon.textContent = '✕';
+      else icon.textContent = 'ℹ';
+
+      modal.classList.add('active');
+
+      const closeBtn = document.getElementById('modal-close-btn');
+      const close = () => {
+        modal.classList.remove('active');
+        document.removeEventListener('keydown', handleKey);
+      };
+      closeBtn.onclick = close;
+      modal.onclick = (e) => { if (e.target === modal) close(); };
+
+      const handleKey = (e) => {
+        if (e.key === 'Escape' || e.key === 'Enter') close();
+      };
+      document.addEventListener('keydown', handleKey);
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      const iconSymbol = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+      const iconColor = type === 'success' ? '#34d399' : (type === 'error' ? '#f87171' : '#38bdf8');
+      toast.innerHTML = `<span style="color: ${iconColor}; font-weight: 700; font-size: 1rem;">${iconSymbol}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'all 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
     // Format Helpers
     function formatDate(epoch) {
       if (!epoch) return "--";
@@ -751,10 +936,14 @@
           .then(data => {
             allRuns = data;
             renderApp();
-            alert("Successfully reloaded benchmarks.json!");
+            showToast("Successfully refreshed benchmarks.json!", "success");
           })
           .catch(err => {
-            alert("Could not automatically fetch benchmarks.json (likely file:// security restriction). Please use 'Load New benchmarks.json' button to select it!");
+            showModal(
+              "Local Browser Security Notice",
+              "When opening this HTML file directly from disk (<code>file:///</code>), modern browsers restrict scripts from automatically fetching local files.<br><br>To load updated benchmarks, click the <strong>📁 Load New benchmarks.json</strong> button or simply <strong>drag and drop benchmarks.json</strong> anywhere onto this window.",
+              "info"
+            );
           });
       });
 
@@ -818,12 +1007,12 @@
           if (Array.isArray(parsed)) {
             allRuns = parsed;
             renderApp();
-            alert(`Loaded ${allRuns.length} benchmark runs from ${file.name}`);
+            showToast(`Loaded ${allRuns.length} benchmark runs from ${file.name}`, "success");
           } else {
-            alert("File is not a valid JSON array of benchmark runs.");
+            showModal("Invalid Benchmark Format", "The selected file is not a valid benchmark array. Please select a valid <code>benchmarks.json</code> file.", "error");
           }
         } catch (err) {
-          alert("Error parsing JSON file: " + err.message);
+          showModal("JSON Parsing Error", `Failed to parse <code>${file.name}</code>:<br><br><pre style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; font-size: 0.8rem; overflow-x: auto;">${err.message}</pre>`, "error");
         }
       };
       reader.readAsText(file);
