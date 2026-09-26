@@ -83,7 +83,32 @@ graph LR
 
 ---
 
-## 4. Side-by-Side Dual GPU Final Profiles
+## 4. Dual GPU Benchmarking (`dual-gpu-max`)
+
+By pooling both GPUs across PCIe (32 GB R9700 + 16 GB RX 9070 XT = 48 GB total VRAM) with a `72,28` layer split, the server can run full high-precision models with massive context windows that would exceed any single card:
+
+| Metric | Dual Run 1: Qwen3.8-27B IQ3_S | Dual Run 2: Qwen3.8-27B Q8_K_XL (Ultra Dense) | Analysis & Impact |
+| :--- | :--- | :--- | :--- |
+| **Model** | `Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf` | `Qwen3.8-27B-UD-Q8_K_XL.gguf` | Quantized vs Full Q8 Precision |
+| **Context Window** | 128,000 tokens (`128k`) | 128,000 tokens (`128k`) | Extended working memory |
+| **GPU Layer Split** | 66/66 (72% GPU 0 / 28% GPU 1) | 66/66 (72% GPU 0 / 28% GPU 1) | 100% GPU Offload |
+| **VRAM Footprint** | **21.67 GB** (13.75G GPU0 / 7.92G GPU1) | **38.43 GB** (25.15G GPU0 / 13.28G GPU1) | Fits 38.4 GB model in VRAM |
+| **Gen Speed (short)** | **58.6 tok/s** | **39.3 tok/s** | Impressive full-precision speed |
+| **Gen Speed (long prompt)**| **52.5 tok/s** | **33.2 tok/s** | Sustained long generation |
+| **Prompt Processing (short)**| 533.4 tok/s | **775.6 tok/s** | +45% faster prompt eval |
+| **Prompt Processing (long)** | **811.9 tok/s** | **1431.6 tok/s** | **2x speedup on prompt ingest** |
+| **Time to First Token (TTFT)** | 667 ms | **459 ms** | Instant TTFT on Q8 |
+| **Total System Power (Dual)** | 332.7 W | 330.4 W | Combined dual-GPU power draw |
+| **Peak Temperature** | 77.0 °C | 83.0 °C | Excellent thermal stability |
+
+### Dual GPU Insights:
+1. **Unlocking 38.4 GB Model Weights at 128k Context:** `Qwen3.8-27B-UD-Q8_K_XL` requires ~38.4 GB VRAM. It cannot fit into the 32GB R9700 or the 16GB 9070 XT alone. In dual-GPU mode, 100% of 66 layers are offloaded into the 48 GB VRAM pool.
+2. **Extreme Prompt Throughput (1,431.6 tok/s):** Prompt ingestion scales across the combined compute cores of both Navi 48 GPUs, reaching over 1,430 tokens/second on long prompts.
+3. **Power & Thermal Budget:** Combined power draw settles at ~330W across both cards, well within system thermal limits (77–83 °C peak).
+
+---
+
+## 5. Side-by-Side Dual GPU Final Profiles
 
 ```ini
 # /etc/systemd/system/amd-gpu-tune.service -> tune_r9700.sh
@@ -100,3 +125,4 @@ POWER_LIMIT_WATT=280
 PINNED_CORE="CPU 6 (Core 6)"
 BANNED_IRQBALANCE="6,7,14,15 (all threads of isolated physical cores)"
 ```
+

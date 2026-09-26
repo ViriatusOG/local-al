@@ -491,5 +491,77 @@
       "cpu_percent": 188.0,
       "peak_temp_c": 78.0
     }
+  },
+  {
+    "id": "2865a091c8ce",
+    "created_at": 1790446304.5840635,
+    "model": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+    "preset_id": "dual-gpu-max",
+    "preset_name": "Dual AMD GPUs (Max VRAM)",
+    "mmproj": "mmproj-Qwen3.8-27B-BF16.gguf",
+    "parallel": 1,
+    "mtp": true,
+    "variant": null,
+    "variant_key": null,
+    "variant_label": null,
+    "settings_key": "[\"Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf\", \"mmproj-Qwen3.8-27B-BF16.gguf\", 1, true, \"all\", 128000, 99, 8, true, \"layer\", \"72,28\", \"q8_0\", \"q8_0\", \"\"]",
+    "llama_build": 11200,
+    "metrics": {
+      "load_s": 3.4,
+      "ctx": 128000,
+      "layers_on_gpu": 66,
+      "total_layers": 66,
+      "gen_tps_short": 58.6,
+      "prompt_tps_short": 533.4,
+      "ttft_ms": 667.0,
+      "gen_tps_long": 52.5,
+      "prompt_tps_long": 811.9,
+      "long_prompt_tokens": 16426,
+      "draft_acceptance": 0.716,
+      "peak_vram_gb": {
+        "0": 13.75,
+        "1": 7.92
+      },
+      "avg_power_w": 332.7,
+      "tokens_per_joule": 0.176,
+      "cpu_percent": 186.0,
+      "peak_temp_c": 77.0
+    }
+  },
+  {
+    "id": "c3d347bce330",
+    "created_at": 1790446407.204714,
+    "model": "Qwen3.8-27B-UD-Q8_K_XL.gguf",
+    "preset_id": "dual-gpu-max",
+    "preset_name": "Dual AMD GPUs (Max VRAM)",
+    "mmproj": "mmproj-F16.gguf",
+    "parallel": 1,
+    "mtp": true,
+    "variant": null,
+    "variant_key": null,
+    "variant_label": null,
+    "settings_key": "[\"Qwen3.8-27B-UD-Q8_K_XL.gguf\", \"mmproj-F16.gguf\", 1, true, \"all\", 128000, 99, 8, true, \"layer\", \"72,28\", \"q8_0\", \"q8_0\", \"\"]",
+    "llama_build": 11200,
+    "metrics": {
+      "load_s": 22.3,
+      "ctx": 128000,
+      "layers_on_gpu": 66,
+      "total_layers": 66,
+      "gen_tps_short": 39.3,
+      "prompt_tps_short": 775.6,
+      "ttft_ms": 459.0,
+      "gen_tps_long": 33.2,
+      "prompt_tps_long": 1431.6,
+      "long_prompt_tokens": 16426,
+      "draft_acceptance": 0.746,
+      "peak_vram_gb": {
+        "0": 25.15,
+        "1": 13.28
+      },
+      "avg_power_w": 330.4,
+      "tokens_per_joule": 0.119,
+      "cpu_percent": 185.0,
+      "peak_temp_c": 83.0
+    }
   }
 ]
