@@ -107,22 +107,29 @@ All benchmarks measured with Qwen3.8-27B IQ3_S + MTP draft acceptance (72–73%)
 
 ## Compiling llama.cpp with ROCm (RDNA 4 / Navi 48)
 
-A customized compilation script (`build-llama-rocm`) is provided:
+If compiling `llama.cpp` from source, configure CMake with RDNA 4 (`gfx1200;gfx1201`) targets and Flash Attention:
 
 ```bash
 git clone https://github.com/ggml-org/llama.cpp.git
 cd llama.cpp
-cp /path/to/r9700-setup/build-llama-rocm ./
-chmod +x build-llama-rocm
-./build-llama-rocm
-```
 
-Key flags configured in `build-llama-rocm`:
-- `GPU_TARGETS="gfx1200;gfx1201"` (Navi 48 targets)
-- `-DGGML_HIP_ROCWMMA_FATTN=ON` (Flash Attention via ROCWMMA)
-- `-DGGML_HIP_RCCL=ON` (RCCL support for multi-GPU scaling)
-- `-j 6` parallel jobs to prevent OOM linking freezes on 8-core / 16-thread CPUs
-- `-DCMAKE_INSTALL_RPATH="\$ORIGIN"` (Properly escaped for runtime shared library resolution)
+HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" cmake -S . -B build \
+  -DGGML_RPC=1 \
+  -DGGML_HIP=ON \
+  -DGGML_NATIVE=1 \
+  -DGGML_HIP_RCCL=ON \
+  -DCMAKE_C_COMPILER=clang \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DGGML_CUDA_NO_PEER_COPY=1 \
+  -DGGML_HIP_ROCWMMA_FATTN=ON \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DGPU_TARGETS="gfx1200;gfx1201" \
+  -DCMAKE_INSTALL_RPATH="\$ORIGIN" \
+  -DAMDGPU_TARGETS="gfx1200;gfx1201" \
+  -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+
+cmake --build build --config Release -j 6 -- VERBOSE=1
+```
 
 ---
 
