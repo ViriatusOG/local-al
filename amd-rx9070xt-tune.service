@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply Custom Undervolt and Power Limits to RX 9070 XT
+After=syslog.target local-fs.target
+After=systemd-modules-load.service
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/tune_rx9070xt.sh
+
+[Install]
+WantedBy=multi-user.target
